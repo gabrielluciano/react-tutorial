@@ -4,7 +4,10 @@ import './index.css';
 
 function Square(props) {
     return (
-        <button className="square" onClick={props.onClick}>
+        <button 
+            className={`square${props.spotlight ? ' spotlight' : ''}`}
+            onClick={props.onClick}
+        >
             {props.value}
         </button>
     );
@@ -51,6 +54,7 @@ class Game extends React.Component {
                 squares: Array(9).fill(null),
             }],
             stepNumber: 0,
+            positions: [],
             xIsNext: true,
         }
     }
@@ -58,6 +62,7 @@ class Game extends React.Component {
     handleClick(i) {
         const history = this.state.history.slice(0, this.state.stepNumber + 1);
         const current = history[history.length - 1];
+        const positions = this.state.positions.slice(0, this.state.stepNumber);
         const squares = [...current.squares];
         if (calculateWinner(squares) || squares[i]) {
             return;
@@ -68,6 +73,7 @@ class Game extends React.Component {
                 squares: squares,
             }]),
             stepNumber: history.length,
+            positions: positions.concat([i + 1]),
             xIsNext: !this.state.xIsNext,
         });
     }
@@ -82,18 +88,28 @@ class Game extends React.Component {
     render() {
         const history = this.state.history;
         const current = history[this.state.stepNumber];
+        const positions = [...this.state.positions];
+        const currentPosition = positions[this.state.stepNumber - 1];
         const winner = calculateWinner(current.squares);
 
         const moves = history.map((step, move) => {
             const desc = move ?
                 'Go to move #' + move :
                 'Go to game start';
+
+            const isBold = this.state.stepNumber === move ? 'selected-move' : null;
+
             return (
                 <li key={move}>
-                    <button onClick={() => this.jumpTo(move)}>{desc}</button>
+                    <button className={isBold} onClick={() => this.jumpTo(move)}>{desc}</button>
                 </li>
             );
         })
+
+        let position = null;
+        if (positions.length && this.state.stepNumber) {
+            position = calculatePosition(currentPosition);
+        }
 
         let status;
         if (winner) {
@@ -112,6 +128,7 @@ class Game extends React.Component {
                 </div>
                 <div className="game-info">
                     <div>{status}</div>
+                    <div>{position}</div>
                     <ol>{moves}</ol>
                 </div>
             </div>
@@ -139,6 +156,21 @@ function calculateWinner(squares) {
     }
 
     return null;
+}
+
+function calculatePosition(position) {
+    let line; let column;
+    if (position < 4) {
+        line = 1;
+        column = position;
+    } else if (position < 7) {
+        line = 2;
+        column = position - 3;
+    } else {
+        line = 3;
+        column = position - 6;
+    }
+    return `last position: (${line}, ${column})`;
 }
 
 // ========================================
